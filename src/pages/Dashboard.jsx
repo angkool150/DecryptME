@@ -119,12 +119,10 @@ function LastChallenge() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
-                        Staganography
+                    <span className="rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[15px] uppercase tracking-[0.08em] text-muted">
+                        Forensics
                     </span>
-                    <span className="rounded border border-orange-400/20 bg-orange-400/[0.07] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] text-orange-300/85">
-                        Easy
-                    </span>
+
                 </div>
 
                 <dl className="mt-6 grid max-w-lg grid-cols-1 gap-x-6 gap-y-2 border-t border-white/[0.06] pt-4 sm:grid-cols-2">
