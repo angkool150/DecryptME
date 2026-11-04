@@ -119,7 +119,7 @@ function playWinSound() {
         })
 
         window.setTimeout(() => {
-            context.close().catch(() => {})
+            context.close().catch(() => { })
         }, 1400)
     } catch {
         // Audio is optional; ignore browsers that block it.
@@ -142,6 +142,105 @@ function renderStepText(text) {
             </a>
         )
     })
+}
+
+function StepsPanel({ steps }) {
+    const [stepsOpen, setStepsOpen] = useState(false)
+    const [openWiki, setOpenWiki] = useState(null) // index of expanded wiki entry
+
+    const toggleWiki = (index) =>
+        setOpenWiki((prev) => (prev === index ? null : index))
+
+    return (
+        <div className="w-full border-t border-neon/20 md:w-[380px] md:border-l md:border-t-0">
+            {/* ── Steps toggle header ── */}
+            <button
+                type="button"
+                onClick={() => {
+                    setStepsOpen((prev) => !prev)
+                    if (stepsOpen) setOpenWiki(null)
+                }}
+                aria-expanded={stepsOpen}
+                className="flex w-full items-center justify-between gap-3 bg-black/30 px-6 py-4 pr-14 text-left transition hover:bg-white/[0.03] md:pl-8 md:pr-14"
+            >
+                <span className="font-mono text-sm uppercase tracking-[0.2em] text-neon/75">
+                    Steps to solve
+                </span>
+                <span
+                    aria-hidden="true"
+                    className={`text-neon/60 transition-transform duration-300 ${stepsOpen ? 'rotate-180' : 'rotate-0'}`}
+                >
+                    ▾
+                </span>
+            </button>
+
+            {/* ── Collapsible body ── */}
+            {stepsOpen && (
+                <div className="overflow-y-auto bg-black/30 px-6 pb-6 md:max-h-[calc(90vh-56px)] md:px-8">
+                    <ol className="mt-5 space-y-3">
+                        {steps.map((step, index) => (
+                            <li key={index} className="rounded-lg border border-neon/10 bg-black/20">
+                                {/* Step row */}
+                                <div className="flex gap-3 p-3">
+                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-neon/50 font-mono text-xs text-neon">
+                                        {index + 1}
+                                    </span>
+                                    <span className="flex-1 text-sm leading-relaxed text-white/80">
+                                        {renderStepText(step.text ?? step)}
+                                    </span>
+                                </div>
+
+                                {/* Wiki toggle — only shown when the step has an info entry */}
+                                {step.info && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleWiki(index)}
+                                            aria-expanded={openWiki === index}
+                                            className="flex w-full items-center gap-2 border-t border-neon/10 px-3 py-2 text-left transition hover:bg-white/[0.03]"
+                                        >
+                                            <span className="font-mono text-[10px] uppercase tracking-widest text-neon/50">
+                                                📖 Learn more
+                                            </span>
+                                            <span
+                                                aria-hidden="true"
+                                                className={`ml-auto text-xs text-neon/40 transition-transform duration-200 ${openWiki === index ? 'rotate-180' : 'rotate-0'}`}
+                                            >
+                                                ▾
+                                            </span>
+                                        </button>
+
+                                        {openWiki === index && (
+                                            <div className="border-t border-neon/10 bg-neon/[0.03] px-4 py-3">
+                                                {step.info.title && (
+                                                    <p className="mb-1 font-mono text-xs font-semibold text-neon/80">
+                                                        {step.info.title}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs leading-relaxed text-white/65">
+                                                    {step.info.body}
+                                                </p>
+                                                {step.info.link && (
+                                                    <a
+                                                        href={step.info.link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="mt-2 inline-block font-mono text-[10px] text-neon underline decoration-neon/40 underline-offset-2 transition hover:decoration-neon"
+                                                    >
+                                                        → Open resource
+                                                    </a>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </li>
+                        ))}
+                    </ol>
+                </div>
+            )}
+        </div>
+    )
 }
 
 function ChallengeModal({ challenge, onClose }) {
@@ -377,24 +476,8 @@ function ChallengeModal({ challenge, onClose }) {
                     ) : null}
                 </section>
 
-                {/* RIGHT: steps to solve */}
-                <aside className="w-full overflow-y-auto border-t border-neon/20 bg-black/30 p-6 md:w-[380px] md:border-l md:border-t-0 md:p-8">
-                    <h3 className="font-mono text-sm uppercase tracking-[0.2em] text-neon/75">
-                        Steps to solve
-                    </h3>
-                    <ol className="mt-5 space-y-4">
-                        {challenge.steps.map((step, index) => (
-                            <li key={index} className="flex gap-3">
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-neon/50 font-mono text-xs text-neon">
-                                    {index + 1}
-                                </span>
-                                <span className="text-sm leading-relaxed text-white/80">
-                                    {renderStepText(step)}
-                                </span>
-                            </li>
-                        ))}
-                    </ol>
-                </aside>
+                {/* RIGHT: steps to solve (collapsible) + per-step wiki */}
+                <StepsPanel steps={challenge.steps} />
             </div>
         </div>,
         document.body,
