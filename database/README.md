@@ -1,6 +1,8 @@
 # DecryptMe database
 
-MySQL 8.0 schema for the DecryptMe user and point system.
+> **Legacy reference only:** `schema.sql`, `admin_features.sql`, `set_passwords.sql`, and `seed.sql` are MySQL 8 scripts from the original Vite/MySQL version. The running Next.js app uses **PostgreSQL/Supabase** (`pg` in `server/db.js`) and does not execute these files. Do not run the MySQL scripts against a Supabase/PostgreSQL database. `supabase_bio.sql` is PostgreSQL and is safe to apply there.
+
+Original MySQL 8.0 schema for the DecryptMe user and point system, kept for reference during the migration.
 
 ## Run in MySQL Workbench
 

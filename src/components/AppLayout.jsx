@@ -1,4 +1,7 @@
+'use client'
+
 import Navbar from './Navbar.jsx'
+import PresenceHeartbeat from './PresenceHeartbeat.jsx'
 
 function AppLayout({ activeItem, children }) {
     return (
@@ -17,6 +20,7 @@ function AppLayout({ activeItem, children }) {
                 <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
             </div>
 
+            <PresenceHeartbeat activeItem={activeItem} />
             <Navbar key={activeItem} activeItem={activeItem} />
 
             {children}

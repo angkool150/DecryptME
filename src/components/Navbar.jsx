@@ -1,9 +1,13 @@
+'use client'
+
 import { useEffect, useRef, useState } from 'react'
 import { navigate } from '../navigation.js'
+import { apiRequest, clearSession, getStoredUser } from '../lib/api.js'
+import { formatNumber, initials } from '../lib/format.js'
 
 const NAV_ITEMS = [
     { label: 'Dashboard', href: '/' },
-    { label: 'Challenges', href: '/challenges', count: 12 },
+    { label: 'Challenges', href: '/challenges' },
     { label: 'Leaderboard', href: '/leaderboard' },
 ]
 
@@ -11,7 +15,33 @@ const PROFILE_LINKS = [
     { label: 'Profile', hint: 'View operator card', href: '/profile', icon: UserIcon },
 ]
 
+const ADMIN_LINK = { label: 'Admin console', hint: 'Manage the platform', href: '/admin', icon: AdminIcon }
+
 function Navbar({ activeItem = 'Dashboard' }) {
+    const authUser = getStoredUser()
+    const displayName = authUser?.username || 'operator'
+    const isAdmin = authUser?.role === 'admin'
+    const navItems = isAdmin ? [...NAV_ITEMS, { label: 'Admin', href: '/admin' }] : NAV_ITEMS
+    const profileLinks = isAdmin ? [...PROFILE_LINKS, ADMIN_LINK] : PROFILE_LINKS
+    const points = Number(authUser?.total_points || 0)
+const [avatarUrl, setAvatarUrl] = useState(authUser?.avatar_url || null)
+
+useEffect(() => {
+    if (!authUser) return
+    let active = true
+    apiRequest('/api/users/me')
+        .then((data) => {
+            if (active) setAvatarUrl(data?.user?.avatar_url || null)
+        })
+        .catch(() => {
+            // Keep the cached avatar URL if the profile request fails.
+        })
+    return () => {
+        active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authUser?.id])
+
     const [active, setActive] = useState(activeItem)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [profileOpen, setProfileOpen] = useState(false)
@@ -104,7 +134,7 @@ function Navbar({ activeItem = 'Dashboard' }) {
                 </a>
 
                 <nav aria-label="Primary" className="ml-2 hidden items-center gap-1 lg:flex">
-                    {NAV_ITEMS.map((item) => {
+                    {navItems.map((item) => {
                         const isActive = active === item.label
 
                         return (
@@ -144,7 +174,12 @@ function Navbar({ activeItem = 'Dashboard' }) {
 
                     <button
                         type="button"
-                        aria-label="Notifications"
+                        aria-label="View announcements"
+                        onClick={() => {
+                            setProfileOpen(false)
+                            setMobileOpen(false)
+                            navigate('/#announcements')
+                        }}
                         className="relative hidden size-9 place-items-center rounded-lg border border-transparent text-muted transition hover:border-white/10 hover:bg-white/[0.04] hover:text-white sm:grid"
                     >
                         <BellIcon className="size-[18px]" />
@@ -171,10 +206,12 @@ function Navbar({ activeItem = 'Dashboard' }) {
                                 : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]'
                                 }`}
                         >
-                            <Avatar />
+                            <Avatar name={displayName} avatarUrl={avatarUrl} />
                             <span className="hidden text-left sm:block">
-                                <span className="block text-[12px] font-medium leading-tight text-white">Profile</span>
-                                <span className="block font-mono text-[9px] leading-tight text-muted">r3v3rs3r</span>
+                                <span className="block text-[12px] font-medium leading-tight text-white">{displayName}</span>
+                                <span className="block font-mono text-[9px] leading-tight text-muted">
+                                    {isAdmin ? 'Administrator' : 'Operator'}
+                                </span>
                             </span>
                             <ChevronDownIcon
                                 className={`size-3.5 text-muted transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''
@@ -190,18 +227,18 @@ function Navbar({ activeItem = 'Dashboard' }) {
                             >
                                 <div className="border-b border-white/[0.07] bg-white/[0.02] p-4">
                                     <div className="flex items-center gap-3">
-                                        <Avatar size="lg" />
+                                        <Avatar size="lg" name={displayName} avatarUrl={avatarUrl} />
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm font-medium text-white">r3v3rs3r</p>
+                                            <p className="truncate text-sm font-medium text-white">{displayName}</p>
                                             <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-                                                Rank #128 · 4,820 pts
+                                                {isAdmin ? 'Administrator' : 'Operator'} · {formatNumber(points)} pts
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="p-1.5">
-                                    {PROFILE_LINKS.map((link) => (
+                                    {profileLinks.map((link) => (
                                         <ProfileLink
                                             key={link.label}
                                             {...link}
@@ -213,7 +250,15 @@ function Navbar({ activeItem = 'Dashboard' }) {
                                 <div className="border-t border-white/[0.07] p-1.5">
                                     <button
                                         type="button"
-                                        onClick={() => setProfileOpen(false)}
+                                        onClick={async () => {
+                                            try {
+                                                await apiRequest('/api/auth/logout', { method: 'POST' })
+                                            } catch {
+                                                // Sign out locally even if the request fails.
+                                            }
+                                            clearSession()
+                                            window.location.href = '/login'
+                                        }}
                                         className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] font-medium text-red-300/90 transition hover:bg-red-400/[0.07] hover:text-red-200"
                                     >
                                         <LogOutIcon className="size-4" />
@@ -245,7 +290,7 @@ function Navbar({ activeItem = 'Dashboard' }) {
                 >
                     <nav aria-label="Mobile navigation" className="mx-auto w-full max-w-[1360px] px-5 py-3 sm:px-8">
                         <div className="space-y-1">
-                            {NAV_ITEMS.map((item) => {
+                            {navItems.map((item) => {
                                 const isActive = active === item.label
 
                                 return (
@@ -285,11 +330,11 @@ function Navbar({ activeItem = 'Dashboard' }) {
                                 }}
                                 className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5 transition hover:border-white/15 hover:bg-white/[0.04]"
                             >
-                                <Avatar />
+                                <Avatar name={displayName} avatarUrl={avatarUrl} />
                                 <span className="min-w-0">
-                                    <span className="block text-[13px] font-medium text-white">Profile</span>
+                                    <span className="block text-[13px] font-medium text-white">{displayName}</span>
                                     <span className="block truncate font-mono text-[9px] uppercase tracking-[0.1em] text-muted">
-                                        r3v3rs3r · rank #128
+                                        {isAdmin ? 'Administrator' : 'Operator'} · {formatNumber(points)} pts
                                     </span>
                                 </span>
                                 <ArrowUpRightIcon className="ml-auto size-4 text-muted/60" />
@@ -326,14 +371,44 @@ function ProfileLink({ href, icon: Icon, label, hint, onSelect }) {
     )
 }
 
-function Avatar({ size = 'sm' }) {
+function AdminIcon({ className }) {
+    return (
+        <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M12 3.5 19 6v5c0 4.2-2.8 7.7-7 9-4.2-1.3-7-4.8-7-9V6l7-2.5Z" />
+            <path d="m9 12 2 2 4-4" />
+        </svg>
+    )
+}
+
+function Avatar({ size = 'sm', name = '', avatarUrl = null }) {
+    const avatarInitials = initials(name)
+    const [failed, setFailed] = useState(false)
+
     return (
         <span
             aria-hidden="true"
-            className={`relative grid shrink-0 place-items-center rounded-full border border-neon/25 bg-[#0d1a11] font-mono font-semibold text-neon shadow-[inset_0_0_14px_rgba(115,247,109,0.1)] ${size === 'lg' ? 'size-10 text-[11px]' : 'size-8 text-[10px]'
+            className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full border border-neon/25 bg-[#0d1a11] font-mono font-semibold text-neon shadow-[inset_0_0_14px_rgba(115,247,109,0.1)] ${size === 'lg' ? 'size-10 text-[11px]' : 'size-8 text-[10px]'
                 }`}
         >
-            RK
+            {avatarUrl && !failed ? (
+                <img
+                    src={avatarUrl}
+                    alt={`${name} profile picture`}
+                    onError={() => setFailed(true)}
+                    className="size-full rounded-full object-cover"
+                />
+            ) : (
+                avatarInitials
+            )}
             <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-[#050806] bg-neon" />
         </span>
     )

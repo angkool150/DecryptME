@@ -1,6 +1,8 @@
+'use client'
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { isCorrectTestFlag } from '../data/testFlags.js'
+import { getToken } from '../lib/api.js'
 
 const FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -243,7 +245,7 @@ function StepsPanel({ steps }) {
     )
 }
 
-function ChallengeModal({ challenge, onClose }) {
+function ChallengeModal({ challenge, onClose, onSolved }) {
     const dialogRef = useRef(null)
     const closeButtonRef = useRef(null)
     const previouslyFocusedRef = useRef(null)
@@ -253,6 +255,7 @@ function ChallengeModal({ challenge, onClose }) {
     const resultAnimationRef = useRef(null)
     const [flagValue, setFlagValue] = useState('')
     const [feedback, setFeedback] = useState(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [confettiBurst, setConfettiBurst] = useState(0)
 
     useEffect(() => {
@@ -398,8 +401,9 @@ function ChallengeModal({ challenge, onClose }) {
 
                     <form
                         className="mt-8 flex gap-3"
-                        onSubmit={(event) => {
+                        onSubmit={async (event) => {
                             event.preventDefault()
+                            if (isSubmitting) return
 
                             const submittedFlag = flagValue.trim()
                             if (!submittedFlag) {
@@ -410,21 +414,50 @@ function ChallengeModal({ challenge, onClose }) {
                                 return
                             }
 
-                            if (isCorrectTestFlag(challenge.id, submittedFlag)) {
-                                setFeedback({
-                                    type: 'success',
-                                    message: `Correct flag! ${challenge.name} solved. +${challenge.points} points (test mode, not saved).`,
-                                })
-                                setFlagValue('')
-                                setConfettiBurst((burst) => burst + 1)
-                                playWinSound()
-                                return
-                            }
+                            setIsSubmitting(true)
+                            setFeedback(null)
 
-                            setFeedback({
-                                type: 'error',
-                                message: 'Incorrect flag. Keep digging and try again.',
-                            })
+                            try {
+                                const token = getToken()
+                                const slug = challenge.slug || challenge.id
+                                const res = await fetch(`/api/challenges/${slug}/submit`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                    },
+                                    body: JSON.stringify({ flag: submittedFlag }),
+                                })
+
+                                const data = await res.json()
+
+                                if (!res.ok) {
+                                    throw new Error(data.error || 'Submission failed.')
+                                }
+
+                                if (data.correct) {
+                                    setFeedback({
+                                        type: 'success',
+                                        message: data.message || `Correct flag! Solved +${challenge.points} points.`,
+                                    })
+                                    setFlagValue('')
+                                    setConfettiBurst((burst) => burst + 1)
+                                    playWinSound()
+                                    if (onSolved) onSolved(challenge.id)
+                                } else {
+                                    setFeedback({
+                                        type: 'error',
+                                        message: data.message || 'Incorrect flag. Keep digging and try again.',
+                                    })
+                                }
+                            } catch (err) {
+                                setFeedback({
+                                    type: 'error',
+                                    message: err.message || 'Error communicating with database.',
+                                })
+                            } finally {
+                                setIsSubmitting(false)
+                            }
                         }}
                     >
                         <label htmlFor="challenge-flag" className="sr-only">
@@ -451,9 +484,10 @@ function ChallengeModal({ challenge, onClose }) {
                         />
                         <button
                             type="submit"
-                            className="rounded bg-neon px-4 py-2 font-mono text-sm font-bold text-black transition hover:opacity-90"
+                            disabled={isSubmitting}
+                            className="rounded bg-neon px-4 py-2 font-mono text-sm font-bold text-black transition hover:opacity-90 disabled:opacity-50"
                         >
-                            Submit
+                            {isSubmitting ? 'Checking…' : 'Submit'}
                         </button>
                     </form>
 
