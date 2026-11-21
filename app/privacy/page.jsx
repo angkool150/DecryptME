@@ -1,5 +1,5 @@
 // Replace this with the real contact address before publishing.
-const CONTACT_EMAIL = 'privacy@example.com'
+const CONTACT_EMAIL = 'decryptMe@gmail.com'
 
 export const metadata = {
     title: 'Privacy policy · decryptme',
@@ -149,7 +149,11 @@ export default function PrivacyPage() {
                                         </Section>
                                     </div>
 
-                                    <div className="mt-10 border-t border-white/[0.06] pt-5 text-center text-[13px] text-muted">
+                                    <div className="mt-10 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/[0.06] pt-5 text-center text-[13px] text-muted">
+                                        <a href="/terms" className="font-medium text-white underline decoration-neon/40 decoration-2 underline-offset-4 transition hover:text-neon">
+                                            Terms of service
+                                        </a>
+                                        <span aria-hidden="true" className="text-white/20">·</span>
                                         <a href="/login" className="font-medium text-white underline decoration-neon/40 decoration-2 underline-offset-4 transition hover:text-neon">
                                             Back to sign in
                                         </a>
@@ -183,7 +187,7 @@ function Backdrop() {
             <div className="auth-backdrop absolute inset-0" />
             <div className="bg-grid grid-fade absolute inset-0 opacity-50" />
             <img
-                src="/favicon.svg"
+                src="/decryptme-logo.svg"
                 alt=""
                 className="absolute -left-40 top-1/2 hidden w-[720px] max-w-none -translate-y-1/2 opacity-[0.025] lg:block xl:-left-24 xl:w-[780px]"
             />
@@ -197,7 +201,7 @@ function Header() {
     return (
         <header className="flex items-center justify-between gap-6 py-5 sm:py-6">
             <a href="/login" className="group flex items-center gap-3">
-                <img src="/favicon.svg" alt="" className="h-9 w-auto drop-shadow-[0_0_16px_rgba(115,247,109,0.22)] transition-transform duration-300 group-hover:-rotate-3" />
+                <img src="/decryptme-logo.svg" alt="" className="h-9 w-auto drop-shadow-[0_0_16px_rgba(115,247,109,0.22)] transition-transform duration-300 group-hover:-rotate-3" />
                 <span className="flex items-center gap-2">
                     <span className="text-[17px] font-semibold tracking-[-0.02em] text-white">decryptme</span>
                     <span className="rounded border border-neon/25 bg-neon/10 px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-neon">ctf</span>

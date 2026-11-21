@@ -52,6 +52,6 @@ export async function requireAuth(req, res, next) {
         if (err?.name === 'JsonWebTokenError' || err?.name === 'TokenExpiredError') {
             return res.status(401).json({ error: 'Token invalid or expired.' })
         }
-                return serverError(res, err, '[requireAuth]')
+        return serverError(res, err, '[requireAuth]')
     }
 }

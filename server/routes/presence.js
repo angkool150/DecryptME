@@ -37,7 +37,7 @@ router.post('/heartbeat', requireAuth, async (req, res) => {
 
         return res.json({ ok: true, activity, path })
     } catch (err) {
-                return serverError(res, err, '[presence/heartbeat]')
+        return serverError(res, err, '[presence/heartbeat]')
     }
 })
 

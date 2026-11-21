@@ -5,7 +5,12 @@ export const metadata = {
     title: 'decryptme — CTF platform',
     description: 'DecryptMe is a CTF arena for hackers, builders, and problem-solvers.',
     icons: {
-        icon: '/decryptme-logo.svg',
+        icon: [
+            { url: '/decryptme-logo.svg', type: 'image/svg+xml', sizes: 'any' },
+            { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+            { url: '/favicon-16.png', type: 'image/png', sizes: '16x16' },
+        ],
+        shortcut: '/favicon.ico',
     },
 }
 
