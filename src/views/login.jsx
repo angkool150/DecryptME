@@ -480,6 +480,9 @@ function ForgotForm({ forgotEmail, setForgotEmail, loading, onForgot }) {
 function Footer() {
   return (
     <footer className="border-t border-white/[0.06] py-5">
+      <p className="mb-2 text-center text-[12px] text-muted">
+        <a href="/privacy" className="underline decoration-neon/40 decoration-2 underline-offset-4 transition hover:text-neon">Privacy policy</a>
+      </p>
       <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted/90">© 2026 decryptme · authorized operators only</p>
     </footer>
   )
