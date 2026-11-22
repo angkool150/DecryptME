@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 export { initials } from '../../lib/format.js'
@@ -139,6 +139,8 @@ export function NoticeBanner({ message, onDismiss }) {
 }
 
 export function Modal({ open, onClose, title, description, children, width = 'max-w-3xl' }) {
+    const backdropPointerDownRef = useRef(false)
+
     useEffect(() => {
         if (!open) return undefined
 
@@ -159,13 +161,25 @@ export function Modal({ open, onClose, title, description, children, width = 'ma
     if (!open) return null
 
     return createPortal(
-        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm sm:items-center" onClick={onClose}>
+        <div
+            className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm sm:items-center"
+            onMouseDown={(event) => {
+                backdropPointerDownRef.current = event.target === event.currentTarget
+            }}
+            onClick={(event) => {
+                if (event.target === event.currentTarget && backdropPointerDownRef.current) onClose()
+                backdropPointerDownRef.current = false
+            }}
+        >
             <div
                 role="dialog"
                 aria-modal="true"
                 aria-label={title}
                 className={cx('relative my-6 w-full overflow-hidden rounded-2xl border border-neon/20 bg-[#080e0b] shadow-2xl', width)}
-                onClick={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                    backdropPointerDownRef.current = false
+                    event.stopPropagation()
+                }}
             >
                 <div className="flex items-start justify-between gap-4 border-b border-white/[0.07] px-5 py-4">
                     <div>

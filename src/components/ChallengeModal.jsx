@@ -245,9 +245,71 @@ function StepsPanel({ steps }) {
     )
 }
 
+function ChallengeData({ value }) {
+    const [copied, setCopied] = useState(false)
+    const timerRef = useRef(null)
+
+    useEffect(() => () => window.clearTimeout(timerRef.current), [])
+
+    async function handleCopy() {
+        let success = false
+
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(value)
+                success = true
+            }
+        } catch {
+            success = false
+        }
+
+        if (!success) {
+            try {
+                const textarea = document.createElement('textarea')
+                textarea.value = value
+                textarea.style.position = 'fixed'
+                textarea.style.opacity = '0'
+                document.body.appendChild(textarea)
+                textarea.select()
+                success = document.execCommand('copy')
+                textarea.remove()
+            } catch {
+                success = false
+            }
+        }
+
+        if (success) {
+            setCopied(true)
+            window.clearTimeout(timerRef.current)
+            timerRef.current = window.setTimeout(() => setCopied(false), 1800)
+        }
+    }
+
+    return (
+        <div className="mt-5 rounded-xl border border-neon/20 bg-black/40 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-neon/70">
+                    Challenge data
+                </p>
+                <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="rounded border border-neon/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-neon transition hover:bg-neon/10"
+                >
+                    {copied ? 'Copied' : 'Copy'}
+                </button>
+            </div>
+            <pre className="mt-3 max-h-56 select-all overflow-auto whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-white/85">
+                {value}
+            </pre>
+        </div>
+    )
+}
+
 function ChallengeModal({ challenge, onClose, onSolved }) {
     const dialogRef = useRef(null)
     const closeButtonRef = useRef(null)
+    const backdropPointerDownRef = useRef(false)
     const previouslyFocusedRef = useRef(null)
     const activeChallengeRef = useRef(null)
     const restoreFocusTimerRef = useRef(null)
@@ -351,7 +413,13 @@ function ChallengeModal({ challenge, onClose, onSolved }) {
     return createPortal(
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
-            onClick={onClose}
+            onMouseDown={(event) => {
+                backdropPointerDownRef.current = event.target === event.currentTarget
+            }}
+            onClick={(event) => {
+                if (event.target === event.currentTarget && backdropPointerDownRef.current) onClose()
+                backdropPointerDownRef.current = false
+            }}
         >
             {confettiBurst > 0 ? <ConfettiBurst key={confettiBurst} /> : null}
 
@@ -361,7 +429,10 @@ function ChallengeModal({ challenge, onClose, onSolved }) {
                 aria-modal="true"
                 aria-labelledby="challenge-modal-title"
                 className="relative flex max-h-[90vh] w-full max-w-[1100px] flex-col overflow-hidden rounded-xl border border-neon/30 bg-[#0b0f0c] shadow-2xl md:flex-row"
-                onClick={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                    backdropPointerDownRef.current = false
+                    event.stopPropagation()
+                }}
             >
                 <button
                     ref={closeButtonRef}
@@ -388,6 +459,8 @@ function ChallengeModal({ challenge, onClose, onSolved }) {
                     <p className="mt-6 whitespace-pre-line leading-relaxed text-white/85">
                         {challenge.question}
                     </p>
+
+                    {challenge.challengeData ? <ChallengeData value={challenge.challengeData} /> : null}
 
                     {challenge.file && (
                         <a

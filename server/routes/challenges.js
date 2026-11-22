@@ -34,6 +34,7 @@ router.get('/', async (req, res) => {
 
         const [challenges] = await pool.query(
             `SELECT c.id, c.category_id, c.slug, c.title AS name, c.description AS question,
+                    c.challenge_data AS "challengeData",
                     c.difficulty, c.points, c.attachment_url AS file,
                     cat.name AS category,
                     ${userId ? '(s.id IS NOT NULL)' : 'FALSE'} AS solved
@@ -84,6 +85,7 @@ router.get('/:slug', async (req, res) => {
     try {
         const [rows] = await pool.query(
             `SELECT c.id, c.slug, c.title, c.description,
+                    c.challenge_data AS "challengeData",
                     c.difficulty, c.points, c.attachment_url,
                     cat.name AS category
              FROM challenges c

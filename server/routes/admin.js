@@ -277,7 +277,7 @@ router.get('/challenges', async (_req, res) => {
         )
         const [challenges] = await pool.query(
             `SELECT c.id, c.category_id, c.slug, c.title, c.description, c.difficulty,
-                    c.points, c.attachment_url, c.is_active, c.created_at, c.updated_at,
+                    c.challenge_data, c.points, c.attachment_url, c.is_active, c.created_at, c.updated_at,
                     cat.name AS category_name,
                     (SELECT COUNT(*) FROM solves s WHERE s.challenge_id = c.id) AS solves,
                     (SELECT COUNT(*) FROM flag_attempts fa WHERE fa.challenge_id = c.id) AS attempts,
@@ -306,6 +306,7 @@ router.post('/challenges', async (req, res) => {
     const title = cleanText(req.body?.title, 150)
     const slug = cleanText(req.body?.slug, 100).toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-')
     const description = cleanText(req.body?.description, 10000)
+    const challengeData = cleanText(req.body?.challenge_data, 10000) || null
     const difficulty = cleanText(req.body?.difficulty, 20).toLowerCase()
     const points = toNumber(req.body?.points)
     const categoryId = toNumber(req.body?.category_id)
@@ -335,10 +336,10 @@ router.post('/challenges', async (req, res) => {
     try {
         const [result] = await pool.query(
             `INSERT INTO challenges
-                (category_id, slug, title, description, difficulty, points, flag_hash, attachment_url, is_active)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (category_id, slug, title, description, challenge_data, difficulty, points, flag_hash, attachment_url, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              RETURNING id`,
-            [categoryId, slug, title, description, difficulty, points, hashFlag(flag), attachmentUrl, isActive]
+            [categoryId, slug, title, description, challengeData, difficulty, points, hashFlag(flag), attachmentUrl, isActive]
         )
 
         await writeAudit(req, {
@@ -352,6 +353,7 @@ router.post('/challenges', async (req, res) => {
                 difficulty,
                 points,
                 is_active: isActive,
+                challenge_data: Boolean(challengeData),
                 attachment_url: attachmentUrl,
             },
         })
@@ -377,6 +379,9 @@ router.put('/challenges/:id', async (req, res) => {
         const title = cleanText(req.body?.title ?? existing.title, 150)
         const slug = cleanText(req.body?.slug ?? existing.slug, 100).toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-')
         const description = cleanText(req.body?.description ?? existing.description, 10000)
+        const challengeData = req.body?.challenge_data === undefined
+            ? existing.challenge_data || null
+            : cleanText(req.body.challenge_data, 10000) || null
         const difficulty = cleanText(req.body?.difficulty ?? existing.difficulty, 20).toLowerCase()
         const points = toNumber(req.body?.points, existing.points)
         const categoryId = toNumber(req.body?.category_id, existing.category_id)
@@ -404,9 +409,10 @@ router.put('/challenges/:id', async (req, res) => {
 
         const fields = [
             'category_id = ?', 'slug = ?', 'title = ?', 'description = ?',
-            'difficulty = ?', 'points = ?', 'attachment_url = ?', 'is_active = ?',
+            'challenge_data = ?', 'difficulty = ?', 'points = ?',
+            'attachment_url = ?', 'is_active = ?',
         ]
-        const values = [categoryId, slug, title, description, difficulty, points, attachmentUrl, isActive]
+        const values = [categoryId, slug, title, description, challengeData, difficulty, points, attachmentUrl, isActive]
 
         if (flag) {
             fields.push('flag_hash = ?')
@@ -428,6 +434,7 @@ router.put('/challenges/:id', async (req, res) => {
                 points,
                 is_active: isActive,
                 flag_changed: Boolean(flag),
+                challenge_data: Boolean(challengeData),
                 attachment_url: attachmentUrl,
             },
         })

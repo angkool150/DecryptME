@@ -28,6 +28,7 @@ const EMPTY_FORM = {
     difficulty: 'easy',
     points: 50,
     description: '',
+    challenge_data: '',
     flag: '',
     attachment_url: '',
     is_active: true,
@@ -261,6 +262,7 @@ function ChallengesSection({ onDataChanged }) {
                 difficulty: detail.difficulty || 'easy',
                 points: detail.points || 50,
                 description: detail.description || '',
+                challenge_data: detail.challenge_data || '',
                 flag: '',
                 attachment_url: categoryAllowsAttachment(detail) ? detail.attachment_url || '' : '',
                 is_active: Boolean(detail.is_active),
@@ -300,6 +302,7 @@ function ChallengesSection({ onDataChanged }) {
                 difficulty: detail.difficulty,
                 points: detail.points,
                 description: detail.description,
+                challenge_data: detail.challenge_data || '',
                 flag: '',
                 attachment_url: detail.attachment_url || '',
                 is_active: Boolean(detail.is_active),
@@ -770,6 +773,19 @@ function ChallengesSection({ onDataChanged }) {
                                 rows={5}
                                 className={textareaClass}
                                 placeholder="Describe the scenario and what students must find."
+                            />
+                        </Field>
+
+                        <Field
+                            label="Challenge data (optional)"
+                            hint="Shown as a copyable block under the description — paste encrypted messages here."
+                        >
+                            <textarea
+                                value={form.challenge_data}
+                                onChange={(event) => setForm((current) => ({ ...current, challenge_data: event.target.value }))}
+                                rows={4}
+                                className={textareaClass}
+                                placeholder="Encrypted message or other data players should copy."
                             />
                         </Field>
 
